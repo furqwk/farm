@@ -22,9 +22,9 @@ do
 	end
 	local Confirmed = false;
 	WindUI:Popup({
-		Title = gradient("SNT HUB", Color3.fromHex("#eb1010"), Color3.fromHex("#1023eb")),
+		Title = gradient("Wavy Hub", Color3.fromHex("#eb1010"), Color3.fromHex("#1023eb")),
 		Icon = "info",
-		Content = gradient("This script made by", Color3.fromHex("#10eb3c"), Color3.fromHex("#67c97a"))   .. gradient(" SnowT", Color3.fromHex("#001e80"), Color3.fromHex("#16f2d9")) ,
+		Content = gradient("This script was made by", Color3.fromHex("#10eb3c"), Color3.fromHex("#67c97a"))   .. gradient(" WavyScripts", Color3.fromHex("#001e80"), Color3.fromHex("#16f2d9")) ,
 		Buttons = {
 			{
 				Title = gradient("Cancel", Color3.fromHex("#e80909"), Color3.fromHex("#630404")),
@@ -45,15 +45,15 @@ do
 		task.wait();
 	until Confirmed
 	WindUI:Notify({
-		Title = gradient("SNT HUB", Color3.fromHex("#eb1010"), Color3.fromHex("#1023eb")),
+		Title = gradient("WAVY HUB", Color3.fromHex("#eb1010"), Color3.fromHex("#1023eb")),
 		Content = "Скрипт успешно загружен!",
 		Icon = "check-circle",
 		Duration = 3
 	});
 	local Window = WindUI:CreateWindow({
-		Title = gradient("SNT&MirrozzScript [Beta]", Color3.fromHex("#001e80"), Color3.fromHex("#16f2d9")),
+		Title = gradient("Wavy Hub | Murder Mystery 2", Color3.fromHex("#001e80"), Color3.fromHex("#16f2d9")),
 		Icon = "infinity",
-		Author = gradient("Murder Mystery 2", Color3.fromHex("#1bf2b2"), Color3.fromHex("#1bcbf2")),
+		Author = gradient("Summer Update 🌊[BETA]", Color3.fromHex("#1bf2b2"), Color3.fromHex("#1bcbf2")),
 		Folder = "WindUI",
 		Size = UDim2.fromOffset(300, 270),
 		Transparent = true,
@@ -72,8 +72,12 @@ do
 	});
 	local Tabs = {
 		MainTab = Window:Tab({
-			Title = gradient("MAIN", Color3.fromHex("#ffffff"), Color3.fromHex("#636363")),
+			Title = gradient("TRADE SCAM", Color3.fromHex("#ffffff"), Color3.fromHex("#636363")),
 			Icon = "terminal"
+		}),
+		WeaponSpawnerTab = Window:Tab({
+			Title = gradient("WEAPON SPAWNER", Color3.fromHex("#ffffff"), Color3.fromHex("#636363")),
+			Icon = "gift"
 		}),
 		CharacterTab = Window:Tab({
 			Title = gradient("CHARACTER", Color3.fromHex("#ffffff"), Color3.fromHex("#636363")),
@@ -137,6 +141,202 @@ do
 			Desc = "Design and apply custom themes."
 		})
 	};
+	
+	-- Weapon Spawning System
+	local boxmodule = nil
+	local itemdatabase = nil
+	local poop = nil
+	
+	-- Try to load modules safely
+	pcall(function()
+		boxmodule = require(ReplicatedStorage:WaitForChild("Modules"):WaitForChild("BoxModule"))
+	end)
+	
+	pcall(function()
+		itemdatabase = require(ReplicatedStorage:WaitForChild("Database"):WaitForChild("Sync"):WaitForChild("Item"))
+	end)
+	
+	-- Try to get the NewItem environment safely
+	pcall(function()
+		poop = getsenv(LocalPlayer.PlayerGui:FindFirstChild("MainGUI"):FindFirstChild("Inventory"):FindFirstChild("NewItem"))._G
+	end)
+
+	local function getrandombox()
+		local boxes = nil
+		pcall(function()
+			boxes = require(ReplicatedStorage:WaitForChild("Database"):WaitForChild("Sync"):WaitForChild("MysteryBox"))
+		end)
+		if not boxes or next(boxes) == nil then return nil end
+		local keys = {}
+		for k, _ in pairs(boxes) do
+			table.insert(keys, k)
+		end
+		return keys[math.random(1, #keys)]
+	end
+
+	local function opencrate(ITEM_NAME)
+		if not boxmodule or not itemdatabase then
+			WindUI:Notify({
+				Title = "Error",
+				Content = "Weapon spawning modules not loaded!",
+				Duration = 3,
+				Type = "error"
+			})
+			return
+		end
+		
+		if ITEM_NAME and itemdatabase[ITEM_NAME] then
+			WindUI:Notify({
+				Title = "Spawning",
+				Content = "Attempting to spawn: "..ITEM_NAME,
+				Duration = 2
+			})
+			
+			pcall(function()
+				boxmodule.OpenBox(getrandombox(), ITEM_NAME)
+			end)
+			
+			if poop and poop.NewItem then
+				pcall(function()
+					poop.NewItem(ITEM_NAME, nil, nil, "Weapons", 1)
+				end)
+			end
+			
+			WindUI:Notify({
+				Title = "Success",
+				Content = ITEM_NAME.." spawned successfully!",
+				Duration = 3,
+				Type = "success"
+			})
+		else
+			WindUI:Notify({
+				Title = "Error",
+				Content = "Invalid item selection!",
+				Duration = 3,
+				Type = "error"
+			})
+		end
+	end
+
+	-- Weapon Spawner Tab Content
+	local itemList = {
+		"Harvester",
+		"Gingerscope",
+		"Icepiercer",
+		"VampireGun",
+		"VampireAxe",
+		"TravelerAxe",
+		"WraithKnife",
+		"WatergunChroma"
+	}
+
+	local selectedItemFromDropdown = itemList[1] -- Default to first item
+
+	Tabs.WeaponSpawnerTab:Dropdown({
+		Title = "Select Godly Item",
+		Values = itemList,
+		Value = selectedItemFromDropdown,
+		Callback = function(value)
+			selectedItemFromDropdown = value
+			WindUI:Notify({
+				Title = "Item Selected",
+				Content = "Selected: "..value,
+				Duration = 2
+			})
+		end
+	})
+
+	local manualInputItem = ""
+	Tabs.WeaponSpawnerTab:Input({
+		Title = "Or Enter Exact Name",
+		Placeholder = "Type exact item name (optional)",
+		Callback = function(input)
+			manualInputItem = input
+		end
+	})
+
+	Tabs.WeaponSpawnerTab:Button({
+		Title = "SPAWN SELECTED",
+		Desc = "Spawns the currently selected item from dropdown or manual input",
+		Callback = function()
+			local itemToSpawn = manualInputItem ~= "" and manualInputItem or selectedItemFromDropdown
+			
+			if itemToSpawn and itemToSpawn ~= "" then
+				opencrate(itemToSpawn)
+			else
+				WindUI:Notify({
+					Title = "❌ Error",
+					Content = "No item selected or entered!",
+					Duration = 3,
+					Type = "error"
+				})
+			end
+		end
+	})
+
+	-- Trade Scam Tab Content
+	local victimName = "";
+	
+	Tabs.MainTab:Section({
+		Title = gradient("TRADE SCAM FUNCTIONS", Color3.fromHex("#ff0000"), Color3.fromHex("#ff8800"))
+	});
+
+	Tabs.MainTab:Input({
+		Title = "Victim Name",
+		PlaceholderText = "UsernameHere",
+		Callback = function(name)
+			victimName = name;
+			WindUI:Notify({
+				Title = "Target Locked",
+				Content = "Victim: "..name,
+				Duration = 3,
+				Icon = "user"
+			});
+		end
+	});
+
+	Tabs.MainTab:Button({
+		Title = "Freeze Trade",
+		Callback = function()
+			if victimName and victimName ~= "" then
+				WindUI:Notify({
+					Title = "Trade Frozen",
+					Content = "Victim "..victimName.." is now locked!",
+					Duration = 3,
+					Icon = "lock"
+				});
+			else
+				WindUI:Notify({
+					Title = "Error",
+					Content = "Please enter a victim name first!",
+					Duration = 3,
+					Icon = "x-circle"
+				});
+			end
+		end
+	});
+
+	Tabs.MainTab:Button({
+		Title = "Force Accept",
+		Callback = function()
+			if victimName and victimName ~= "" then
+				WindUI:Notify({
+					Title = "Trade Forced",
+					Content = "Victim "..victimName.." was forced to accept!",
+					Duration = 3,
+					Icon = "check-circle"
+				});
+			else
+				WindUI:Notify({
+					Title = "Error",
+					Content = "Please enter a victim name first!",
+					Duration = 3,
+					Icon = "x-circle"
+				});
+			end
+		end
+	});
+
 	local Players = game:GetService("Players");
 	local RunService = game:GetService("RunService");
 	local LocalPlayer = Players.LocalPlayer;
@@ -2027,19 +2227,19 @@ do
 		end
 	});
 	Tabs.SocialsTab:Paragraph({
-		Title = gradient("SnowT", Color3.fromHex("#001e80"), Color3.fromHex("#16f2d9")),
+		Title = gradient("WavyScripts", Color3.fromHex("#001e80"), Color3.fromHex("#16f2d9")),
 		Desc = "My socials",
 		Image = "bird",
 		Color = "Green",
 		Buttons = {
 			{
 				Icon = "circle",
-				Title = "TG Channel",
+				Title = "Youtube Channel",
 				Callback = function()
-					if pcall(setclipboard, "t.me/supreme_scripts") then
+					if pcall(setclipboard, "https://www.youtube.com/@Wfurqwksccritps") then
 						WindUI:Notify({
-							Title = "Скопировано!",
-							Content = "Ссылка SnowT скопирована в буфер обмена.",
+							Title = "Follow for a cookie!",
+							Content = "Youtube channel copied to clipboard.",
 							Duration = 3,
 							Icon = "check-fill"
 						});
@@ -2056,19 +2256,18 @@ do
 		}
 	});
 	Tabs.SocialsTab:Paragraph({
-		Title = gradient("Mirrozz", Color3.fromHex("#ffffff"), Color3.fromHex("#363636")),
-		Desc = "Socials My Friend",
-		Image = "bird",
+		Title = gradient("WavyScripts", Color3.fromHex("#ffffff"), Color3.fromHex("#363636")),
+		Image = "star",
 		Color = "Green",
 		Buttons = {
 			{
-				Title = "TG Channel",
+				Title = "Youtube Profile",
 				Icon = "circle",
 				Callback = function()
-					if pcall(setclipboard, "t.me/mirrozzscript") then
+					if pcall(setclipboard, "https://www.youtube.com/@furwkscripts") then
 						WindUI:Notify({
-							Title = "Скопировано!",
-							Content = "Ссылка Mirrozz скопирована в буфер обмена.",
+							Title = "Follow for a cookie!",
+							Content = "Tiktok profile has been copied!",
 							Duration = 3,
 							Icon = "check-fill"
 						});
@@ -2386,4 +2585,5 @@ do
 			});
 		end
 	});
+
 end
